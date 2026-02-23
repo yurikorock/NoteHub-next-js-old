@@ -6,10 +6,11 @@ import Modal from '@/components/Modal/Modal';
 import NoteForm from '@/components/NoteForm/NoteForm';
 import NoteList from '@/components/NoteList/NoteList';
 import { getNotes, NotesListResponse } from '@/lib/api';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useState } from 'react';
 import css from './Notes.module.css';
 import SearchBox from '@/components/SearchBox/SearchBox';
+import { useDebouncedCallback } from 'use-debounce';
 
 export default function AppClient() {
   const [query, setQuery] = useState('');
@@ -20,24 +21,32 @@ export default function AppClient() {
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
+  const saveDebouncedQuery = useDebouncedCallback((query: string) => {
+    setDebouncedQuery(query);
+  }, 300);
+
   const { data, isError, isLoading } = useQuery<NotesListResponse>({
     queryKey: ['notes', { query: debouncedQuery, page: currentPage }],
     queryFn: () => getNotes(debouncedQuery, currentPage),
-
+    placeholderData: keepPreviousData,
     refetchOnMount: false,
   });
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(event.target.value);
-    // saveDebouncedQuery(event.target.value);
+    saveDebouncedQuery(event.target.value);
     setCurrentPage(1);
   };
   return (
     <>
       <div className={css.app}>
         <header className={css.toolbar}>
-          {<SearchBox searchQuery={query} onChange={handleChange}/>}
-          {<button className={css.button} onClick={openModal}>Create note +</button>}
+          {<SearchBox searchQuery={query} onChange={handleChange} />}
+          {
+            <button className={css.button} onClick={openModal}>
+              Create note +
+            </button>
+          }
         </header>
         {isModalOpen && (
           <Modal onClose={closeModal}>
