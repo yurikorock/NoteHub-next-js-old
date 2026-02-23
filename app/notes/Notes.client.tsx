@@ -11,6 +11,7 @@ import { useState } from 'react';
 import css from './Notes.module.css';
 import SearchBox from '@/components/SearchBox/SearchBox';
 import { useDebouncedCallback } from 'use-debounce';
+import Pagination from '@/components/Pagination/Pagination';
 
 export default function AppClient() {
   const [query, setQuery] = useState('');
@@ -25,12 +26,14 @@ export default function AppClient() {
     setDebouncedQuery(query);
   }, 300);
 
-  const { data, isError, isLoading } = useQuery<NotesListResponse>({
+  const { data, isError, isLoading, isSuccess } = useQuery<NotesListResponse>({
     queryKey: ['notes', { query: debouncedQuery, page: currentPage }],
     queryFn: () => getNotes(debouncedQuery, currentPage),
     placeholderData: keepPreviousData,
     refetchOnMount: false,
   });
+
+  const totalPages = data?.totalPages ?? 0;
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(event.target.value);
@@ -42,6 +45,13 @@ export default function AppClient() {
       <div className={css.app}>
         <header className={css.toolbar}>
           {<SearchBox searchQuery={query} onChange={handleChange} />}
+          {isSuccess && totalPages > 1 && (
+            <Pagination
+              totalPages={totalPages}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+            />
+          )}
           {
             <button className={css.button} onClick={openModal}>
               Create note +
