@@ -7,11 +7,12 @@ import NoteForm from '@/components/NoteForm/NoteForm';
 import NoteList from '@/components/NoteList/NoteList';
 import { getNotes, NotesListResponse } from '@/lib/api';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import css from './Notes.module.css';
 import SearchBox from '@/components/SearchBox/SearchBox';
 import { useDebouncedCallback } from 'use-debounce';
 import Pagination from '@/components/Pagination/Pagination';
+import toast, { Toaster } from 'react-hot-toast';
 
 export default function AppClient() {
   const [query, setQuery] = useState('');
@@ -34,6 +35,12 @@ export default function AppClient() {
   });
 
   const totalPages = data?.totalPages ?? 0;
+
+   useEffect(() => {
+    if (isSuccess && data?.notes.length === 0) {
+      toast.error('No notes found for your request.');
+    }
+  }, [isSuccess, data]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(event.target.value);
@@ -70,6 +77,7 @@ export default function AppClient() {
         )}
         {isLoading && <Loader />}
       </div>
+      <Toaster/>
     </>
   );
 }
